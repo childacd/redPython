@@ -1,0 +1,33 @@
+import boto3
+
+def get_latest_ami_id(owner_id, architecture, name_substring):
+    ec2_client = boto3.client('ec2')
+    
+    # 获取符合条件的 AMI 列表
+    response = ec2_client.describe_images(
+        Owners=[owner_id],
+        Filters=[
+            {'Name': 'architecture', 'Values': [architecture]},
+            {'Name': 'name', 'Values': ['*' + name_substring + '*']}
+        ]
+    )
+    
+    # 从响应中选择最新的 AMI
+    latest_ami = None
+    latest_creation_date = None
+    for image in response['Images']:
+        creation_date = image['CreationDate']
+        if latest_creation_date is None or creation_date > latest_creation_date:
+            latest_creation_date = creation_date
+            latest_ami = image['ImageId']
+    
+    return latest_ami
+
+# 示例参数
+owner_id = 'YOUR_OWNER_ACCOUNT_ID'
+architecture = 'x86_64'  # 'x86_64' 或 'arm64'
+name_substring = 'golden'  # 名字中包含的子字符串
+
+# 获取最新的符合条件的 AMI ID
+latest_ami_id = get_latest_ami_id(owner_id, architecture, name_substring)
+print("Latest AMI ID:", latest_ami_id)
