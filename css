@@ -1,0 +1,8 @@
+Client           AWS EC2 Service
+  |                      |
+  |----run_instances---->|
+  |                      |
+  |                      |----Create new instance---->|
+  |                      |<----Return create response----|
+  |<---Extract instance ID----|
+  |<---Print instance ID----|
