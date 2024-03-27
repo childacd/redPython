@@ -1,0 +1,30 @@
+import boto3
+import requests
+
+# 获取当前实例的 instance ID
+instance_id = requests.get('http://169.254.169.254/latest/meta-data/instance-id').text
+
+# 创建 EC2 客户端
+ec2_client = boto3.client('ec2')
+
+# 获取实例信息
+response = ec2_client.describe_instances(InstanceIds=[instance_id])
+
+# 提取所需信息
+for reservation in response['Reservations']:
+    for instance in reservation['Instances']:
+        iam_profile = instance.get('IamInstanceProfile', {}).get('Arn')
+        subnet_id = instance.get('SubnetId')
+        security_groups = [sg['GroupId'] for sg in instance.get('SecurityGroups', [])]
+        tags = instance.get('Tags', [])
+        kkk_value = None
+        for tag in tags:
+            if tag['Key'] == 'kkk':
+                kkk_value = tag['Value']
+                break
+
+# 打印结果
+print("IAM Profile: ", iam_profile)
+print("Subnet ID: ", subnet_id)
+print("Security Group IDs: ", security_groups)
+print("Value of tag 'kkk': ", kkk_value)
