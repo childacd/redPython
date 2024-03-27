@@ -1,0 +1,24 @@
+import configparser
+
+def update_config(file_path):
+    # 创建 ConfigParser 对象
+    config = configparser.ConfigParser()
+
+    # 读取配置文件
+    config.read(file_path)
+
+    # 在指定的 section 中设置新的配置
+    section_name = 'aws_provision_config'
+    if not config.has_section(section_name):
+        config.add_section(section_name)
+
+    # 添加或修改配置项
+    config.set(section_name, 'ccc', 'c3')
+    config.set(section_name, 'ddd', 'd4')
+
+    # 将更新后的配置写回到文件
+    with open(file_path, 'w') as config_file:
+        config.write(config_file)
+
+# 假设配置文件路径为 dummy.ini
+update_config('dummy.ini')
