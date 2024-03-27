@@ -1,0 +1,58 @@
+import boto3
+import requests
+
+def get_instance_architecture(instance_type):
+    ec2_client = boto3.client('ec2')
+    response = ec2_client.describe_instance_types(InstanceTypes=[instance_type])
+    if 'InstanceTypes' in response and response['InstanceTypes']:
+        return response['InstanceTypes'][0]['ProcessorInfo']['SupportedArchitectures'][0]
+    return None
+
+def get_current_instance_ami_owner_id():
+    # 获取当前实例的 AMI ID
+    instance_metadata = requests.get('http://169.254.169.254/latest/meta-data/ami-id').text
+    
+    # 使用 AMI ID 获取 AMI 的详细信息
+    ec2_client = boto3.client('ec2')
+    response = ec2_client.describe_images(ImageIds=[instance_metadata])
+    if 'Images' in response and response['Images']:
+        return response['Images'][0]['OwnerId']
+    return None
+
+def get_latest_ami_id(name_substring, architecture):
+    ec2_client = boto3.client('ec2')
+    
+    # 获取当前实例的 AMI 的 owner id
+    owner_id = get_current_instance_ami_owner_id()
+    
+    # 获取符合条件的 AMI 列表
+    response = ec2_client.describe_images(
+        Owners=[owner_id],
+        Filters=[
+            {'Name': 'architecture', 'Values': [architecture]},
+            {'Name': 'name', 'Values': ['*' + name_substring + '*']},
+            {'Name': 'platform-details', 'Values': ['Linux/UNIX']}
+        ]
+    )
+    
+    # 从响应中选择最新的 AMI
+    latest_ami = None
+    latest_creation_date = None
+    for image in response['Images']:
+        creation_date = image['CreationDate']
+        if latest_creation_date is None or creation_date > latest_creation_date:
+            latest_creation_date = creation_date
+            latest_ami = image['ImageId']
+    
+    return latest_ami
+
+# 示例参数
+name_substring = 'golden'  # 名字中包含的子字符串
+instance_type = 'YOUR_INSTANCE_TYPE'  # 替换为实际的 instance type
+
+# 获取实例类型的架构信息
+architecture = get_instance_architecture(instance_type)
+
+# 获取最新的符合条件的 AMI ID
+latest_ami_id = get_latest_ami_id(name_substring, architecture)
+print("Latest AMI ID:", latest_ami_id)
